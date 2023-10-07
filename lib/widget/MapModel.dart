@@ -18,6 +18,7 @@ import 'package:maps_launcher/maps_launcher.dart';
 import 'package:provider/provider.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import '../View/AppPage/homePage.dart';
+import '../Services/YourBackgroundService.dart';
 import '../models/Navigation.dart';
 import '../provider/DataUser.dart';
 import 'SwipButton.dart';
@@ -34,9 +35,10 @@ class MapLocation extends StatefulWidget {
 }
 
 
+int value=9;
 class _MapLocationState extends State<MapLocation> {
   LatLng? _myLocation;
-  late LatLng _previusLocation;
+  LatLng? _NewLocation;
   late StreamSubscription<Position> positionStreamSubscription;
   LatLng _startPoint=LatLng(0.0, 0.0);
   bool locationGet=false;
@@ -48,32 +50,19 @@ class _MapLocationState extends State<MapLocation> {
   MapController mapController=MapController();
   bool ordarGet=false;
   String TextName='';
-
+  Distance distanceRefrish = Distance();
 
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
 
   messagingOnOpenApp(BuildContext context){
     FirebaseMessaging.onMessageOpenedApp.listen((event) {
       if(event.notification!.title=='تحديث الموقع'){
-        EditLocation();
-        print('تم تحديث الموقع ');
+   /*     EditLocation();
+        print('تم تحديث الموقع ');*/
       }
     });
   }
 
-  void _initLocationUpdates() {
-    final geolocator = Geolocator();
-    final locationOptions = LocationSettings(
-      accuracy: LocationAccuracy.high,
-      distanceFilter: 10, // تحديث الموقع عند التغيير بمسافة 10 أمتار
-    );
-
-    Geolocator.getPositionStream(locationSettings: locationOptions).listen((position) {
-      setState(() {
-        _currentPosition = position;
-      });
-    });
-  }//فحص اذا كانت مستخدمة ام لا
 
 
   getDataFromDB() async {
@@ -106,6 +95,10 @@ class _MapLocationState extends State<MapLocation> {
     }
   }
 
+
+
+
+
   Future<void> getRoute() async {
     if (_myLocation != null && _startPoint != null) {
       final String apiUrl =
@@ -131,19 +124,7 @@ class _MapLocationState extends State<MapLocation> {
     }
   }
 
-EditLocation() async {
-    try{
-      await FirebaseFirestore.instance.collection('DilevaryHala').doc(FirebaseAuth.instance.currentUser!.uid).update({
-        'Location':GeoPoint(_myLocation!.latitude,_myLocation!.longitude),
-      });
-      print('تم تحديث الموقع الحالي ');
 
-      //__________________________________ afterUpdateLocationWait 3 Secandes And Back Value 0 _________________________________________________
-
-    }
-    catch(e){print(e);}
-  print('LocationUpdated');
-}
 
 haveOrdar(){
   GeoPoint user=widget.OrdarData['UserLocation'];
@@ -152,25 +133,60 @@ haveOrdar(){
     TextName=widget.OrdarData['Name'];
     widget.OrdarData['State']=1;
   });
-print(_startPoint);
-}
+  }
 
   @override
   void initState() {
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      print('Got a message whilst in the foreground!');
-      print('Message data: ${message.data}');
-      if (message.notification!.title=='تحديث الموقع') {
-        EditLocation();
+
+    /**/
+/*    Stream<int?> DelivaryState() {
+      try {
+        return FirebaseFirestore.instance
+            .collection('UpdateLocation')
+            .doc('City1')
+            .snapshots()
+            .map<int?>((snapshot) {
+          if (snapshot.exists) {
+            final data = snapshot.data() as Map<String, dynamic>;
+            final numValue = data['Update'] as int?;
+            return numValue;
+          } else {
+            return null; // إذا لم يتم العثور على المستند
+          }
+        });
+      } catch (e) {
+        print(e);
+        return Stream.empty(); // في حالة حدوث خطأ
       }
-    });//في حالة forground
+    }
+    *//**//*
+    final numStream = DelivaryState();
+
+    numStream.listen((numValue) {
+      if (numValue != null && numValue == 1 ) {
+
+
+        print('Value of Num: $value');
+        getMyLocation();
+        print(_myLocation);
+*//*
+        EditLocation();
+*//*
+
+        // هنا يمكنك القيام بما تريده باستخدام القيمة المُراقبة
+      } else {
+        Timer.periodic(Duration(seconds: 1), (timer) {    value=numValue as int;});
+        print('Document not found');
+      }
+    });*/
+
+
     getMyLocation();
     if(widget.whichPage==false){
      GeoPoint market=widget.OrdarData['MarketLocation'];
      _startPoint=LatLng(market.latitude, market.longitude);
      TextName=widget.OrdarData['MarketName'];
     }
-
     widget.whichPage? null:getRoute();
     messagingOnOpenApp(context);
 
@@ -178,15 +194,12 @@ print(_startPoint);
       LatLng newLocation = LatLng(position.latitude, position.longitude);
       setState(() {
         _myLocation = newLocation;
-        _previusLocation=_myLocation!;
       });
       getRoute();
     });
 
-    Timer.periodic(Duration(seconds: 80), (timer) {
-      if(_myLocation==_previusLocation){print('==');}
-      else{EditLocation();}
-      });
+
+
     super.initState();
   }
 
@@ -194,6 +207,13 @@ print(_startPoint);
     positionStreamSubscription.cancel(); // إلغاء اشتراك التحديثات المستمرة للموقع
     super.dispose();
   }
+
+
+
+
+
+
+
 /*latitude:32.323002, longitude:35.368901*/
   @override
   Widget build(BuildContext context) {
@@ -505,7 +525,9 @@ print(_startPoint);
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return Text("Loading");
               }
+/*
               snapshot.data!.docs[0]['Update']==0?null:EditLocation();
+*/
               return Container();
             },
           ),

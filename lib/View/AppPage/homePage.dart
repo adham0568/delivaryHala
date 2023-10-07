@@ -11,6 +11,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 import '../../ thems/colors.dart';
@@ -47,6 +48,25 @@ var homePageVM=HomePageVM();
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+
+              ElevatedButton(onPressed: () {
+                FlutterBackgroundService().invoke('setAsForeground');
+              }, child: Text('Foreground Service')),
+
+              ElevatedButton(onPressed: () async {
+               final service =FlutterBackgroundService();
+               bool isRunning=await service.isRunning();
+               if(isRunning){
+                 service.invoke('stopService');
+               }
+               else{
+                 service.startService();
+               }
+               setState(() {
+                 print('a');
+               });
+              }, child: Text('BackGround Service')),
+
               MyCustomWidget(),
               SizedBox(height:themeApp.H/10,),
               Container(

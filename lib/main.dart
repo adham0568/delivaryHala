@@ -1,15 +1,27 @@
+import 'package:delivaryhalaapp/Services/YourBackgroundService.dart';
 import 'package:delivaryhalaapp/provider/ActiveState.dart';
 import 'package:delivaryhalaapp/provider/DataUser.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'View/authPages/LogInPage.dart';
 import 'widget/SnackBar.dart';
 import 'View/AppPage/homePage.dart';
 
 void main() async{
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Permission.notification.isDenied.then(
+      (value) {
+        if(value) {
+          Permission.notification.request();
+        }
+      }
+  );
+  await initializeService();
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   runApp(const MyApp());
@@ -26,7 +38,7 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MultiProvider(providers: [
       ChangeNotifierProvider(create: (context) {return Userdata();},),
-      ChangeNotifierProvider(create: (context) {return activeState();},)
+      ChangeNotifierProvider(create: (context) {return activeState();},),
     ],
     child:  MaterialApp(
       home: StreamBuilder(
